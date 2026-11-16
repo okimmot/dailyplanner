@@ -261,10 +261,11 @@ kbd {
 }
 @media (pointer: coarse) { kbd { display: none; } }
 
-.len-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
-.len-head .box-label { margin: 0; }
-.len-val { display: inline-flex; align-items: center; gap: 6px; }
-.len-hint { font-size: 14px; margin-right: 4px; }
+/* Fixed height + centre alignment so the row never shifts when the "1h 30m" hint appears. */
+.len-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 38px; margin-bottom: 4px; }
+.len-head .box-label { margin: 0; line-height: 1; }
+.len-val { display: inline-flex; align-items: center; gap: 6px; height: 100%; }
+.len-hint { font-size: 14px; line-height: 1; margin-right: 4px; white-space: nowrap; }
 .len-num {
   width: 4.2ch;
   box-sizing: content-box;
