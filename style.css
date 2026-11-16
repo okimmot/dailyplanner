@@ -13,24 +13,25 @@
   --green: #1c9a5f;
   --shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
   --gutter: 60px;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #131313;
-    --text: #f4f4f4;
-    --muted: #9b9b9b;
-    --surface: #1b1b1b;
-    --surface-2: #272727;
-    --line: #262626;
-    --accent: #5b7cff;
-    --accent-soft: #1c2548;
-    --accent-soft-hover: #232f5c;
-    --accent-text: #a9b8ff;
-    --red: #ff6b63;
-    --green: #40c98a;
-    --shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
-  }
+/* Light is the default; dark is opt-in through the switch in the header. */
+:root[data-theme="dark"] {
+  --bg: #131313;
+  --text: #f4f4f4;
+  --muted: #9b9b9b;
+  --surface: #1b1b1b;
+  --surface-2: #272727;
+  --line: #262626;
+  --accent: #5b7cff;
+  --accent-soft: #1c2548;
+  --accent-soft-hover: #232f5c;
+  --accent-text: #a9b8ff;
+  --red: #ff6b63;
+  --green: #40c98a;
+  --shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -89,6 +90,7 @@ ul { list-style: none; }
 
 /* ---------- Header ---------- */
 
+.head-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 h1 { font-size: 28px; font-weight: 500; letter-spacing: -0.01em; }
 h2 { font-size: 24px; font-weight: 500; letter-spacing: -0.01em; }
 
@@ -308,7 +310,7 @@ kbd {
 .check svg { width: 10px; height: 10px; }
 .check[aria-checked="true"] { background: var(--accent); color: #fff; }
 .done .check { border-color: var(--muted); background: var(--muted); }
-@media (prefers-color-scheme: dark) { .done .check { color: var(--bg); } }
+[data-theme="dark"] .done .check { color: var(--bg); }
 
 /* ---------- Schedule ---------- */
 

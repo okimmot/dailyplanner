@@ -64,7 +64,7 @@
     const s = readJSON(SETTINGS_KEY) || {};
     const dayStart = Number.isInteger(s.dayStart) ? clamp(s.dayStart, 0, 23) : 6;
     const dayEnd = Number.isInteger(s.dayEnd) ? clamp(s.dayEnd, dayStart + 1, 24) : 24;
-    return { dayStart, dayEnd };
+    return { dayStart, dayEnd, theme: s.theme === 'dark' ? 'dark' : 'light' };
   }
 
   function cleanTasks(list) {
@@ -615,6 +615,24 @@
   $('#editCancel').addEventListener('click', () => editor.close());
   editor.addEventListener('click', (e) => { if (e.target === editor) editor.close(); });
 
+  // ---------- theme ----------
+
+  const themeToggle = $('#themeToggle');
+
+  function applyTheme() {
+    const dark = settings.theme === 'dark';
+    if (dark) document.documentElement.dataset.theme = 'dark';
+    else delete document.documentElement.dataset.theme;
+    themeToggle.textContent = dark ? 'Light' : 'Dark';
+    themeToggle.setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} mode`);
+  }
+
+  themeToggle.addEventListener('click', () => {
+    settings.theme = settings.theme === 'dark' ? 'light' : 'dark';
+    saveSettings();
+    applyTheme();
+  });
+
   // ---------- day range, clear, carry-over ----------
 
   function fillRange() {
@@ -691,11 +709,12 @@
 
   window.addEventListener('storage', (e) => {
     if (e.key === STORE_KEY && !drag && !draft && !editor.open) { state = loadState(); render(); }
-    if (e.key === SETTINGS_KEY) { settings = loadSettings(); fillRange(); render(); }
+    if (e.key === SETTINGS_KEY) { settings = loadSettings(); applyTheme(); fillRange(); render(); }
   });
 
   // ---------- start ----------
 
+  applyTheme();
   fillRange();
   lastMinute = nowMin();
   commit();
