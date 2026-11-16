@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Today</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="page">
+
+    <header class="head">
+      <h1><span id="dayName"></span> <span class="muted" id="dateStr"></span></h1>
+      <div class="clock" id="clock"></div>
+      <p class="summary" id="summary"></p>
+
+      <div class="carry" id="carry" hidden>
+        <span id="carryText"></span>
+        <span class="carry-actions">
+          <button type="button" class="chip accent" id="carryBring">Bring over</button>
+          <button type="button" class="chip" id="carryDismiss">Dismiss</button>
+        </span>
+      </div>
+    </header>
+
+    <aside class="side">
+      <form class="add" id="addForm" autocomplete="off">
+        <div class="box">
+          <label class="box-label" for="newTitle">New task</label>
+          <div class="title-row">
+            <input class="title-input" id="newTitle" type="text" placeholder="What needs doing?" maxlength="120" enterkeyhint="done">
+            <kbd>/</kbd>
+          </div>
+        </div>
+
+        <div class="box">
+          <span class="box-label">Length</span>
+          <div class="pills" id="durPills" role="radiogroup" aria-label="Length"></div>
+          <div class="start-row">
+            <label for="newStart">Start <span class="muted">optional</span></label>
+            <input class="time-input" id="newStart" type="time">
+          </div>
+        </div>
+
+        <button class="primary" type="submit">Add task</button>
+      </form>
+
+      <section class="side-section">
+        <div class="side-head">
+          <h2>Unscheduled</h2>
+          <button type="button" class="link" id="placeAll" hidden>Place all</button>
+        </div>
+        <ul class="unscheduled" id="unscheduled"></ul>
+        <p class="hint" id="unscheduledHint">Tasks without a start time wait here. Drag one onto the schedule, or place it in the next free slot.</p>
+      </section>
+
+      <section class="side-section">
+        <div class="side-head"><h2>Day</h2></div>
+        <div class="stats">
+          <div class="stat"><span class="stat-label">Planned</span><span class="stat-value" id="statPlanned"></span></div>
+          <div class="stat"><span class="stat-label">Done</span><span class="stat-value" id="statDone"></span></div>
+          <div class="stat"><span class="stat-label">To do</span><span class="stat-value" id="statTodo"></span></div>
+          <div class="stat"><span class="stat-label">Free time</span><span class="stat-value" id="statFree"></span></div>
+        </div>
+        <div class="progress" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+      </section>
+    </aside>
+
+    <section class="schedule">
+      <div class="schedule-head">
+        <h2>Schedule</h2>
+        <div class="schedule-tools">
+          <span class="range">
+            <select id="dayStart" aria-label="Day starts at"></select>
+            <span class="muted">–</span>
+            <select id="dayEnd" aria-label="Day ends at"></select>
+          </span>
+          <button type="button" class="chip" id="clearDay">Clear day</button>
+        </div>
+      </div>
+      <div class="grid" id="grid">
+        <div id="hours"></div>
+        <div class="lane" id="lane"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <dialog class="editor" id="editor">
+    <form id="editForm" autocomplete="off">
+      <div class="box">
+        <label class="box-label" for="editTitle">Task</label>
+        <input class="title-input" id="editTitle" type="text" maxlength="120" enterkeyhint="done">
+      </div>
+
+      <div class="box">
+        <div class="start-row">
+          <label for="editStart">Start</label>
+          <span class="start-controls">
+            <button type="button" class="link" id="editUnschedule">Unschedule</button>
+            <input class="time-input" id="editStart" type="time">
+          </span>
+        </div>
+        <div class="start-row">
+          <label for="editDur">Length</label>
+          <select class="time-input" id="editDur"></select>
+        </div>
+        <label class="start-row check-row">
+          <span>Done</span>
+          <input type="checkbox" id="editDone">
+        </label>
+      </div>
+
+      <div class="editor-actions">
+        <button type="button" class="chip danger" id="editDelete">Delete</button>
+        <span class="spacer"></span>
+        <button type="button" class="chip" id="editCancel">Cancel</button>
+        <button type="submit" class="chip solid">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
