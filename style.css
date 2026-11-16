@@ -387,7 +387,8 @@ kbd {
 .hint { font-size: 14px; color: var(--muted); line-height: 1.5; }
 
 /* The list scrolls on its own so the Day stats below it always stay visible. */
-.side-section.unsched { display: flex; flex-direction: column; flex: 0 1 auto; min-height: 92px; }
+.side-section.unsched { display: flex; flex-direction: column; flex: 0 1 auto; }
+.side-section.unsched:has(.unscheduled:not(:empty)) { min-height: 92px; }
 .unscheduled { display: flex; flex-direction: column; gap: 4px; min-height: 0; overflow-y: auto; scrollbar-width: none; }
 .unscheduled::-webkit-scrollbar { display: none; }
 .unscheduled:not(:empty) { min-height: 54px; }
@@ -421,13 +422,13 @@ kbd {
 .u-item.done .u-title { text-decoration: line-through; color: var(--muted); }
 .u-item .chip { flex: none; padding: 6px 12px; background: var(--bg); box-shadow: 0 0 0 1px var(--line); }
 
-.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; }
 .stat { display: flex; flex-direction: column; gap: 2px; }
-.stat-label { font-size: 14px; color: var(--muted); }
-.stat-value { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; }
+.stat-label { font-size: 13px; color: var(--muted); }
+.stat-value { font-size: 17px; font-weight: 500; letter-spacing: -0.02em; }
 .stat-value.bad { color: var(--red); }
 
-.progress { margin-top: 14px; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.progress { margin-top: 10px; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
 .progress-fill { height: 100%; width: 0; border-radius: 999px; background: var(--accent); transition: width 0.3s ease; }
 
 /* ---------- Checkbox ---------- */
@@ -686,6 +687,23 @@ body.resizing, body.resizing * { cursor: ns-resize !important; user-select: none
   .side .box { padding: 10px 14px; }
   .side .len-head { height: 30px; margin-bottom: 0; }
   .side .len-num { font-size: 20px; }
+}
+
+/* Laptop-height windows: squeeze the form a little more. */
+@media (min-width: 901px) and (max-height: 700px) {
+  .side { gap: 10px; }
+  .side .add { gap: 3px; }
+  .side .box { padding: 8px 14px; }
+  .side .box-label { margin-bottom: 4px; }
+  .side .primary { padding: 10px; }
+  .side .len-head { height: 26px; }
+  .side .ticks { height: 24px; margin-top: 0; }
+  .side .start-row { min-height: 30px; }
+  .side .add .start-row { margin-top: 4px; }
+  .side .time-input { min-height: 30px; padding: 4px 10px; }
+  .side .side-section.unsched:has(.unscheduled:not(:empty)) { min-height: 76px; }
+  .side .unscheduled:not(:empty) { min-height: 42px; }
+  .side h2 { font-size: 20px; }
 }
 
 /* Medium: to-do list drops under the schedule column. */
