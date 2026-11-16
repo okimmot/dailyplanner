@@ -551,10 +551,52 @@
     if (m >= 60) out.append(el('span', { class: 'muted', text: fmtDur(m) }));
   }
 
+  // Tick marks every 15 min; the labelled ones are buttons that jump straight to that length.
+  const LABELLED = [30, 60, 120, 180, 240, 300];
+  const SNAP_RADIUS = 3;   // minutes a dragged thumb is pulled toward a 15-minute mark
+
+  function buildTicks(box, input) {
+    const min = +input.min, max = +input.max;
+    const at = (v) => `${(v - min) / (max - min)}`;
+    box.replaceChildren();
+    for (let v = 15; v <= max; v += 15) {
+      const major = LABELLED.includes(v);
+      const tick = el('span', { class: 'tick' + (major ? ' major' : '') });
+      tick.style.setProperty('--p', at(v));
+      box.append(tick);
+      if (!major) continue;
+      const label = el('button', { class: 'tick-label', type: 'button', text: v < 60 ? `${v}m` : `${v / 60}h`, 'aria-label': `${fmtDur(v)}` });
+      label.style.setProperty('--p', at(v));
+      label.addEventListener('click', () => {
+        input.value = String(v);
+        input.dispatchEvent(new Event('input'));
+      });
+      box.append(label);
+    }
+  }
+
+  function setupSlider(input, out, ticks) {
+    let pointerDown = false;
+    input.addEventListener('pointerdown', () => { pointerDown = true; });
+    window.addEventListener('pointerup', () => { pointerDown = false; });
+    window.addEventListener('pointercancel', () => { pointerDown = false; });
+    input.addEventListener('input', () => {
+      // Only dragging snaps; arrow keys still move one minute at a time for exact values.
+      if (pointerDown) {
+        const near = Math.round(+input.value / 15) * 15;
+        if (near >= +input.min && near <= +input.max && Math.abs(near - +input.value) <= SNAP_RADIUS) {
+          input.value = String(near);
+        }
+      }
+      showLen(input, out);
+    });
+    showLen(input, out);
+    buildTicks(ticks, input);
+  }
+
   const newDur = $('#newDur');
-  newDur.addEventListener('input', () => showLen(newDur, $('#newDurOut')));
-  showLen(newDur, $('#newDurOut'));
-  editDur.addEventListener('input', () => showLen(editDur, $('#editDurOut')));
+  setupSlider(newDur, $('#newDurOut'), $('#newDurTicks'));
+  setupSlider(editDur, $('#editDurOut'), $('#editDurTicks'));
 
   $('#addForm').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -582,6 +624,7 @@
     editDur.max = String(Math.max(300, t.dur));   // keep tasks resized past 300 editable
     editDur.value = String(t.dur);
     showLen(editDur, $('#editDurOut'));
+    buildTicks($('#editDurTicks'), editDur);
     editDone.checked = t.done;
     $('#editUnschedule').hidden = t.start == null;
     editor.showModal();
