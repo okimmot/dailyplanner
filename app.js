@@ -3,6 +3,7 @@
 
   const STORE_KEY = 'day-planner:v1';
   const SETTINGS_KEY = 'day-planner:settings';
+  const TODO_KEY = 'day-planner:todos';
   const HOUR_H = 72;            // px per hour
   const PPM = HOUR_H / 60;      // px per minute
   const SNAP = 15;              // minutes
@@ -615,6 +616,64 @@
   $('#editCancel').addEventListener('click', () => editor.close());
   editor.addEventListener('click', (e) => { if (e.target === editor) editor.close(); });
 
+  // ---------- to-do list ----------
+  // Separate from the day's plan: to-dos persist across days until removed.
+
+  function loadTodos() {
+    const list = readJSON(TODO_KEY);
+    if (!Array.isArray(list)) return [];
+    return list
+      .filter((t) => t && typeof t.text === 'string')
+      .map((t) => ({ id: String(t.id || uid()), text: t.text, done: !!t.done }));
+  }
+
+  let todos = loadTodos();
+  const todoList = $('#todoList'), todoInput = $('#todoInput');
+
+  function saveTodos() {
+    try { localStorage.setItem(TODO_KEY, JSON.stringify(todos)); } catch { /* storage unavailable */ }
+  }
+
+  function renderTodos() {
+    const ordered = [...todos.filter((t) => !t.done), ...todos.filter((t) => t.done)];
+    todoList.replaceChildren(...ordered.map((t) =>
+      el('li', { class: 't-item' + (t.done ? ' done' : ''), 'data-id': t.id },
+        checkButton(t),
+        el('span', { class: 't-text', text: t.text }),
+        el('button', { class: 't-del', type: 'button', 'aria-label': `Delete ${t.text}`, text: '×' }))));
+    $('#clearTodos').hidden = !todos.some((t) => t.done);
+  }
+
+  function commitTodos() {
+    saveTodos();
+    renderTodos();
+  }
+
+  $('#todoForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = todoInput.value.trim();
+    if (!text) { todoInput.focus(); return; }
+    todos.push({ id: uid(), text, done: false });
+    todoInput.value = '';
+    commitTodos();
+    todoInput.focus();
+  });
+
+  todoList.addEventListener('click', (e) => {
+    const item = e.target.closest('.t-item');
+    const todo = item && todos.find((t) => t.id === item.dataset.id);
+    if (!todo) return;
+    if (e.target.closest('.t-del')) todos = todos.filter((t) => t !== todo);
+    else if (e.target.closest('.check, .t-text')) todo.done = !todo.done;
+    else return;
+    commitTodos();
+  });
+
+  $('#clearTodos').addEventListener('click', () => {
+    todos = todos.filter((t) => !t.done);
+    commitTodos();
+  });
+
   // ---------- theme ----------
 
   const themeToggle = $('#themeToggle');
@@ -709,6 +768,7 @@
 
   window.addEventListener('storage', (e) => {
     if (e.key === STORE_KEY && !drag && !draft && !editor.open) { state = loadState(); render(); }
+    if (e.key === TODO_KEY) { todos = loadTodos(); renderTodos(); }
     if (e.key === SETTINGS_KEY) { settings = loadSettings(); applyTheme(); fillRange(); render(); }
   });
 
@@ -716,6 +776,7 @@
 
   applyTheme();
   fillRange();
+  renderTodos();
   lastMinute = nowMin();
   commit();
 

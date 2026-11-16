@@ -99,6 +99,19 @@
       </div>
     </section>
 
+    <aside class="todo">
+      <div class="side-head">
+        <h2>To-do</h2>
+        <button type="button" class="link" id="clearTodos" hidden>Clear done</button>
+      </div>
+      <form class="todo-add" id="todoForm" autocomplete="off">
+        <input id="todoInput" type="text" placeholder="Add a to-do" maxlength="160" enterkeyhint="done" aria-label="New to-do">
+        <button type="submit" class="chip accent">Add</button>
+      </form>
+      <ul class="todo-list" id="todoList"></ul>
+      <p class="hint" id="todoHint">Loose things to remember. They stay until you tick them off and aren't tied to a time.</p>
+    </aside>
+
   </div>
 
   <dialog class="editor" id="editor">

@@ -60,23 +60,22 @@ ul { list-style: none; }
 /* ---------- Layout ---------- */
 
 .page {
-  max-width: 1160px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 56px 24px 96px;
+  padding: 56px 32px 96px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
+  grid-template-columns: 340px minmax(0, 1fr) 320px;
   grid-template-areas:
-    "head side"
-    "schedule side";
-  column-gap: 64px;
+    "side head todo"
+    "side schedule todo";
+  column-gap: 56px;
   row-gap: 36px;
   align-items: start;
 }
 
 .head { grid-area: head; }
 .schedule { grid-area: schedule; min-width: 0; }
-.side {
-  grid-area: side;
+.side, .todo {
   position: sticky;
   top: 24px;
   max-height: calc(100vh - 48px);
@@ -86,7 +85,74 @@ ul { list-style: none; }
   flex-direction: column;
   gap: 36px;
 }
-.side::-webkit-scrollbar { display: none; }
+.side { grid-area: side; }
+.todo { grid-area: todo; gap: 0; }
+.side::-webkit-scrollbar, .todo::-webkit-scrollbar { display: none; }
+
+/* ---------- To-do list ---------- */
+
+.todo-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 18px;
+  border-radius: 20px;
+  background: var(--surface);
+}
+.todo-add input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  padding: 6px 0;
+  background: transparent;
+  font-size: 18px;
+  font-weight: 500;
+}
+.todo-add input::placeholder { color: var(--muted); opacity: 0.55; }
+.todo-add .chip { flex: none; padding: 10px 16px; }
+
+.todo-list { margin-top: 8px; display: flex; flex-direction: column; }
+.todo-list:empty { display: none; }
+.todo-list:empty + .hint { margin-top: 14px; }
+.todo-list:not(:empty) + .hint { display: none; }
+
+.t-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 6px 11px 12px;
+  border-radius: 14px;
+  transition: background-color 0.15s;
+}
+.t-item:hover { background: var(--surface); }
+.t-item .check { margin-top: 2px; }
+.t-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 16px;
+  line-height: 22px;
+  overflow-wrap: anywhere;
+}
+.t-item.done .t-text { text-decoration: line-through; color: var(--muted); }
+.t-del {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: -3px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+.t-item:hover .t-del, .t-del:focus-visible { opacity: 1; }
+.t-del:hover { color: var(--red); }
+@media (pointer: coarse) { .t-del { opacity: 1; } }
 
 /* ---------- Header ---------- */
 
@@ -521,10 +587,23 @@ body.resizing, body.resizing * { cursor: ns-resize !important; user-select: none
 
 /* ---------- Small screens ---------- */
 
+/* Medium: to-do list drops under the schedule column. */
+@media (max-width: 1200px) {
+  .page {
+    grid-template-columns: 320px minmax(0, 1fr);
+    grid-template-areas:
+      "side head"
+      "side schedule"
+      "side todo";
+    column-gap: 40px;
+  }
+  .todo { position: static; max-height: none; overflow: visible; }
+}
+
 @media (max-width: 900px) {
   .page {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "head" "side" "schedule";
+    grid-template-areas: "head" "side" "schedule" "todo";
     padding: 28px 16px 72px;
     row-gap: 32px;
   }
