@@ -8,7 +8,6 @@
   const PPM = HOUR_H / 60;      // px per minute
   const SNAP = 15;              // minutes
   const DAY = 1440;
-  const DURATIONS = [15, 30, 45, 60, 90, 120];
   const CHECK_SVG = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5l2.5 2.5 4.5-5.5"/></svg>';
 
   // ---------- helpers ----------
@@ -76,7 +75,7 @@
         id: String(t.id || uid()),
         title: t.title,
         start: Number.isFinite(t.start) ? clamp(Math.round(t.start), 0, DAY - 5) : null,
-        dur: Number.isFinite(t.dur) ? clamp(Math.round(t.dur), 5, DAY) : 30,
+        dur: Number.isFinite(t.dur) ? clamp(Math.round(t.dur), 1, DAY) : 30,
         done: !!t.done,
       }));
   }
@@ -117,7 +116,7 @@
 
   const findTask = (id) => state.tasks.find((t) => t.id === id);
   const scheduled = () => state.tasks.filter((t) => t.start != null);
-  const selectedDur = () => +(document.querySelector('input[name="dur"]:checked')?.value || 30);
+  const selectedDur = () => +$('#newDur').value || 30;
 
   // ---------- elements ----------
 
@@ -400,8 +399,8 @@
       d.node.style.top = `${(d.start - vs) * PPM}px`;
       d.node.querySelector('.b-time').textContent = timeRange(d.start, d.dur);
     } else if (d.kind === 'resize') {
-      const end = vs + snap((d.y - rect.top) / PPM);
-      d.dur = clamp(end - d.start, SNAP, ve - d.start);
+      const end = vs + Math.round((d.y - rect.top) / PPM / 5) * 5;   // resize in 5-minute steps
+      d.dur = clamp(end - d.start, 5, ve - d.start);
       d.node.style.height = `${Math.max(d.dur * PPM - 2, 14)}px`;
       d.node.querySelector('.b-time').textContent = timeRange(d.start, d.dur);
     } else {
@@ -545,10 +544,17 @@
 
   // ---------- add form ----------
 
-  $('#durPills').append(...DURATIONS.map((d) =>
-    el('label', { class: 'pill' },
-      el('input', { type: 'radio', name: 'dur', value: String(d), checked: d === 30 }),
-      el('span', { text: fmtDur(d) }))));
+  // Length sliders: 1–300 min in one-minute steps (the editor's can stretch for longer tasks).
+  function showLen(input, out) {
+    const m = +input.value;
+    out.replaceChildren(`${m} min`);
+    if (m >= 60) out.append(el('span', { class: 'muted', text: fmtDur(m) }));
+  }
+
+  const newDur = $('#newDur');
+  newDur.addEventListener('input', () => showLen(newDur, $('#newDurOut')));
+  showLen(newDur, $('#newDurOut'));
+  editDur.addEventListener('input', () => showLen(editDur, $('#editDurOut')));
 
   $('#addForm').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -567,22 +573,15 @@
 
   // ---------- editor ----------
 
-  function fillDurations(current) {
-    const opts = [];
-    for (let m = 15; m <= 180; m += 15) opts.push(m);
-    for (let m = 210; m <= 480; m += 30) opts.push(m);
-    if (!opts.includes(current)) { opts.push(current); opts.sort((a, b) => a - b); }
-    editDur.replaceChildren(...opts.map((m) => el('option', { value: String(m), text: fmtDur(m) })));
-    editDur.value = String(current);
-  }
-
   function openEditor(id) {
     const t = findTask(id);
     if (!t) return;
     editingId = id;
     editTitle.value = t.title;
     editStart.value = t.start == null ? '' : hhmm(t.start);
-    fillDurations(t.dur);
+    editDur.max = String(Math.max(300, t.dur));   // keep tasks resized past 300 editable
+    editDur.value = String(t.dur);
+    showLen(editDur, $('#editDurOut'));
     editDone.checked = t.done;
     $('#editUnschedule').hidden = t.start == null;
     editor.showModal();
