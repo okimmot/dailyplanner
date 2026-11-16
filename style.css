@@ -80,7 +80,7 @@ ul { list-style: none; }
   scrollbar-width: none;
   display: flex;
   flex-direction: column;
-  gap: 36px;
+  gap: 24px;
 }
 .side { grid-area: side; }
 .todo { grid-area: todo; gap: 0; }
@@ -386,7 +386,12 @@ kbd {
 
 .hint { font-size: 14px; color: var(--muted); line-height: 1.5; }
 
-.unscheduled { display: flex; flex-direction: column; gap: 4px; }
+/* The list scrolls on its own so the Day stats below it always stay visible. */
+.side-section.unsched { display: flex; flex-direction: column; flex: 0 1 auto; min-height: 92px; }
+.unscheduled { display: flex; flex-direction: column; gap: 4px; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.unscheduled::-webkit-scrollbar { display: none; }
+.unscheduled:not(:empty) { min-height: 54px; }
+.unscheduled > * { flex: none; }
 .unscheduled:not(:empty) + .hint { display: none; }
 
 .u-item {
@@ -416,13 +421,13 @@ kbd {
 .u-item.done .u-title { text-decoration: line-through; color: var(--muted); }
 .u-item .chip { flex: none; padding: 6px 12px; background: var(--bg); box-shadow: 0 0 0 1px var(--line); }
 
-.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 16px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
 .stat { display: flex; flex-direction: column; gap: 2px; }
 .stat-label { font-size: 14px; color: var(--muted); }
-.stat-value { font-size: 26px; font-weight: 500; letter-spacing: -0.02em; }
+.stat-value { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; }
 .stat-value.bad { color: var(--red); }
 
-.progress { margin-top: 20px; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.progress { margin-top: 14px; height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
 .progress-fill { height: 100%; width: 0; border-radius: 999px; background: var(--accent); transition: width 0.3s ease; }
 
 /* ---------- Checkbox ---------- */
@@ -655,6 +660,33 @@ body.resizing, body.resizing * { cursor: ns-resize !important; user-select: none
 .spacer { flex: 1; }
 
 /* ---------- Small screens ---------- */
+
+/* Short windows: tighten the left column so it still fits without scrolling. */
+@media (min-width: 901px) and (max-height: 820px) {
+  .side { gap: 16px; }
+  .side .box { padding: 12px 16px; }
+  .side .title-input { font-size: 20px; }
+  .side .primary { padding: 12px; font-size: 16px; }
+  .side .hint { display: none; }
+  .side .side-head { margin-bottom: 8px; }
+  .side .stat-value { font-size: 18px; }
+  .side .stats { gap: 8px 16px; }
+  .side .progress { margin-top: 10px; }
+  .side .start-row { min-height: 34px; }
+  .side .clock { font-size: 26px; }
+}
+
+/* Very short windows: Day stats become a single row. */
+@media (min-width: 901px) and (max-height: 790px) {
+  .side { gap: 12px; }
+  .side .head-top + .clock { margin-top: 2px; }
+  .side .stats { grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .side .stat-label { font-size: 12px; }
+  .side .stat-value { font-size: 15px; }
+  .side .box { padding: 10px 14px; }
+  .side .len-head { height: 30px; margin-bottom: 0; }
+  .side .len-num { font-size: 20px; }
+}
 
 /* Medium: to-do list drops under the schedule column. */
 @media (max-width: 1200px) {
