@@ -545,10 +545,18 @@
   // ---------- add form ----------
 
   // Length sliders: 1–300 min in one-minute steps (the editor's can stretch for longer tasks).
-  function showLen(input, out) {
+  // Each slider is paired with a number box ("23") and an "1h 30m" hint that stay in sync.
+  const newField = { num: $('#newDurNum'), hint: $('#newDurHint') };
+  const editField = { num: $('#editDurNum'), hint: $('#editDurHint') };
+
+  function showHint(input, f) {
     const m = +input.value;
-    out.replaceChildren(`${m} min`);
-    if (m >= 60) out.append(el('span', { class: 'muted', text: fmtDur(m) }));
+    f.hint.textContent = m >= 60 ? fmtDur(m) : '';
+  }
+
+  function showLen(input, f) {
+    f.num.value = input.value;
+    showHint(input, f);
   }
 
   // Tick marks every 15 min; the labelled ones are buttons that jump straight to that length.
@@ -575,7 +583,17 @@
     }
   }
 
-  function setupSlider(input, out, ticks) {
+  function setupSlider(input, f, ticks) {
+    // Typing a number moves the slider; it is clamped to the slider's range when you leave the box.
+    f.num.addEventListener('input', () => {
+      const v = parseInt(f.num.value, 10);
+      if (!Number.isFinite(v) || v < 1) return;
+      input.value = String(Math.min(v, +input.max));
+      showHint(input, f);
+    });
+    f.num.addEventListener('change', () => showLen(input, f));
+    f.num.addEventListener('focus', () => f.num.select());
+
     let pointerDown = false;
     input.addEventListener('pointerdown', () => { pointerDown = true; });
     window.addEventListener('pointerup', () => { pointerDown = false; });
@@ -588,15 +606,15 @@
           input.value = String(near);
         }
       }
-      showLen(input, out);
+      showLen(input, f);
     });
-    showLen(input, out);
+    showLen(input, f);
     buildTicks(ticks, input);
   }
 
   const newDur = $('#newDur');
-  setupSlider(newDur, $('#newDurOut'), $('#newDurTicks'));
-  setupSlider(editDur, $('#editDurOut'), $('#editDurTicks'));
+  setupSlider(newDur, newField, $('#newDurTicks'));
+  setupSlider(editDur, editField, $('#editDurTicks'));
 
   $('#addForm').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -623,7 +641,7 @@
     editStart.value = t.start == null ? '' : hhmm(t.start);
     editDur.max = String(Math.max(300, t.dur));   // keep tasks resized past 300 editable
     editDur.value = String(t.dur);
-    showLen(editDur, $('#editDurOut'));
+    editDur.dispatchEvent(new Event('input'));   // refresh the number box and hint
     buildTicks($('#editDurTicks'), editDur);
     editDone.checked = t.done;
     $('#editUnschedule').hidden = t.start == null;

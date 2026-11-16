@@ -52,7 +52,11 @@
           <div class="len">
             <div class="len-head">
               <label class="box-label" for="newDur">Length</label>
-              <output class="len-out" id="newDurOut" for="newDur"></output>
+              <span class="len-val">
+                <span class="len-hint muted" id="newDurHint"></span>
+                <input class="len-num" id="newDurNum" type="number" min="1" max="300" step="1" inputmode="numeric" aria-label="Length in minutes">
+                <span class="len-unit">min</span>
+              </span>
             </div>
             <input class="range" type="range" id="newDur" min="1" max="300" step="1" value="30">
             <div class="ticks" id="newDurTicks"></div>
@@ -138,7 +142,11 @@
         <div class="len">
           <div class="len-head">
             <label class="box-label" for="editDur">Length</label>
-            <output class="len-out" id="editDurOut" for="editDur"></output>
+            <span class="len-val">
+              <span class="len-hint muted" id="editDurHint"></span>
+              <input class="len-num" id="editDurNum" type="number" min="1" max="300" step="1" inputmode="numeric" aria-label="Length in minutes">
+              <span class="len-unit">min</span>
+            </span>
           </div>
           <input class="range" type="range" id="editDur" min="1" max="300" step="1" value="30">
           <div class="ticks" id="editDurTicks"></div>
