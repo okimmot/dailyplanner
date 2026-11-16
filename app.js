@@ -5,7 +5,7 @@
   const SETTINGS_KEY = 'day-planner:settings';
   const TODO_KEY = 'day-planner:todos';
   const HOUR_H = 56;            // px per hour
-  const PPM = HOUR_H / 60;      // px per minute
+  let PPM = HOUR_H / 60;        // px per minute (rescaled to fit the window on wide screens)
   const SNAP = 15;              // minutes
   const DAY = 27 * 60;          // the timeline can run until 03:00 the next day
   const CHECK_SVG = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5l2.5 2.5 4.5-5.5"/></svg>';
@@ -230,10 +230,24 @@
     return out;
   }
 
+  // Block style by its height in pixels, since the scale changes to fit the screen.
   function sizeClass(dur) {
-    if (dur < 30) return ' row tiny';
-    if (dur < 45) return ' row';
-    return dur >= 75 ? ' tall' : '';
+    const h = dur * PPM;
+    if (h < 24) return ' row tiny';
+    if (h < 50) return ' row';
+    return h >= 70 ? ' tall' : '';
+  }
+
+  // On wide screens the whole day is squeezed to fit the window height (no scrolling).
+  // On phones it keeps a fixed, readable hour height instead.
+  const FIT = matchMedia('(min-width: 901px)');
+  const MIN_PPM = 26 / 60, MAX_PPM = 72 / 60;
+
+  function fitScale() {
+    if (!FIT.matches) { PPM = HOUR_H / 60; return; }
+    const top = grid.getBoundingClientRect().top + scrollY;
+    const avail = innerHeight - top - 34;
+    PPM = clamp(avail / (view[1] - view[0]), MIN_PPM, MAX_PPM);
   }
 
   function checkButton(t) {
@@ -264,6 +278,7 @@
 
   function renderTimeline() {
     view = viewRange();
+    fitScale();
     const [vs, ve] = view;
     const now = nowMin();
     grid.style.height = `${(ve - vs) * PPM}px`;
@@ -843,6 +858,12 @@
     if (!drag && !draft) renderTimeline();
     else positionNow();
   }
+
+  let resizeFrame = 0;
+  window.addEventListener('resize', () => {
+    cancelAnimationFrame(resizeFrame);
+    resizeFrame = requestAnimationFrame(() => { if (!drag && !draft) renderTimeline(); });
+  });
 
   setInterval(tick, 5000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
