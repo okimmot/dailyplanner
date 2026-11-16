@@ -4,10 +4,10 @@
   const STORE_KEY = 'day-planner:v1';
   const SETTINGS_KEY = 'day-planner:settings';
   const TODO_KEY = 'day-planner:todos';
-  const HOUR_H = 72;            // px per hour
+  const HOUR_H = 56;            // px per hour
   const PPM = HOUR_H / 60;      // px per minute
   const SNAP = 15;              // minutes
-  const DAY = 1440;
+  const DAY = 27 * 60;          // the timeline can run until 03:00 the next day
   const CHECK_SVG = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.5l2.5 2.5 4.5-5.5"/></svg>';
 
   // ---------- helpers ----------
@@ -27,19 +27,35 @@
     return h ? `${h}h` : `${r}m`;
   }
 
+  // A clock time like 01:30 typed into a start field means "after midnight" when the
+  // day is set to run past 24:00 and that time falls before the day's start.
   function parseTime(s) {
     const m = /^(\d{1,2}):(\d{2})/.exec(s || '');
-    return m ? clamp(+m[1] * 60 + +m[2], 0, DAY - 5) : null;
+    if (!m) return null;
+    let t = +m[1] * 60 + +m[2];
+    if (t < settings.dayStart * 60 && t + 1440 <= settings.dayEnd * 60) t += 1440;
+    return clamp(t, 0, DAY - 5);
   }
 
   function dateKey(d = new Date()) {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
-  function nowMin() {
+  // "Now" on the planner's own clock. If the day runs past midnight (e.g. to 03:00),
+  // the hours after midnight still belong to the day that started before them.
+  function logicalNow() {
     const d = new Date();
-    return d.getHours() * 60 + d.getMinutes();
+    let m = d.getHours() * 60 + d.getMinutes();
+    let date = d;
+    if (m < Math.max(0, settings.dayEnd - 24) * 60) {
+      m += 1440;
+      date = new Date(d.getTime() - 86400000);
+    }
+    return { m, date };
   }
+
+  const nowMin = () => logicalNow().m;
+  const todayKey = () => dateKey(logicalNow().date);
 
   function el(tag, attrs = {}, ...kids) {
     const node = document.createElement(tag);
@@ -63,7 +79,7 @@
   function loadSettings() {
     const s = readJSON(SETTINGS_KEY) || {};
     const dayStart = Number.isInteger(s.dayStart) ? clamp(s.dayStart, 0, 23) : 6;
-    const dayEnd = Number.isInteger(s.dayEnd) ? clamp(s.dayEnd, dayStart + 1, 24) : 24;
+    const dayEnd = Number.isInteger(s.dayEnd) ? clamp(s.dayEnd, dayStart + 1, 27) : 24;
     return { dayStart, dayEnd, theme: s.theme === 'dark' ? 'dark' : 'light' };
   }
 
@@ -84,9 +100,10 @@
   // parked in `carry` until the user brings them over or dismisses them.
   function loadState() {
     const saved = readJSON(STORE_KEY);
-    const today = dateKey();
-    if (saved && saved.date === today) {
-      return { date: today, tasks: cleanTasks(saved.tasks), carry: cleanTasks(saved.carry), carryFrom: saved.carryFrom || null };
+    const today = todayKey();
+    // A saved date that is ahead of the logical date (setting changed after midnight) is kept as is.
+    if (saved && saved.date >= today) {
+      return { date: saved.date, tasks: cleanTasks(saved.tasks), carry: cleanTasks(saved.carry), carryFrom: saved.carryFrom || null };
     }
     let carry = [], carryFrom = null;
     if (saved) {
@@ -131,7 +148,7 @@
   // ---------- header + stats ----------
 
   function renderHeader() {
-    const d = new Date();
+    const d = logicalNow().date;
     $('#dayName').textContent = d.toLocaleDateString('en-GB', { weekday: 'long' });
     $('#dateStr').textContent = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
     $('#clock').textContent = hhmm(nowMin());
@@ -307,7 +324,7 @@
   function nextFree(dur) {
     const from = Math.ceil(Math.max(nowMin(), settings.dayStart * 60) / SNAP) * SNAP;
     const busy = scheduled();
-    for (let s = from; s + dur <= DAY; s += SNAP) {
+    for (let s = from; s + dur <= settings.dayEnd * 60; s += SNAP) {
       if (!busy.some((b) => s < b.start + b.dur && b.start < s + dur)) return s;
     }
     return clamp(from, 0, Math.max(0, DAY - dur));
@@ -756,7 +773,11 @@
 
   function fillRange() {
     dayStartSel.replaceChildren(...Array.from({ length: 24 }, (_, h) => el('option', { value: String(h), text: hhmm(h * 60) })));
-    dayEndSel.replaceChildren(...Array.from({ length: 24 }, (_, i) => el('option', { value: String(i + 1), text: i + 1 === 24 ? '24:00' : hhmm((i + 1) * 60) })));
+    dayEndSel.replaceChildren(...Array.from({ length: 27 }, (_, i) => {
+      const h = i + 1;
+      // 24:00 is the default end; later options run into the next morning.
+      return el('option', { value: String(h), text: h === 24 ? '24:00' : h > 24 ? `${hhmm(h * 60)} +1` : hhmm(h * 60) });
+    }));
     dayStartSel.value = String(settings.dayStart);
     dayEndSel.value = String(settings.dayEnd);
   }
@@ -808,7 +829,7 @@
   // ---------- clock, day rollover, other tabs ----------
 
   function tick() {
-    if (dateKey() !== state.date) {
+    if (todayKey() > state.date) {
       if (drag) cancelDrag();
       if (editor.open) editor.close();
       state = loadState();
